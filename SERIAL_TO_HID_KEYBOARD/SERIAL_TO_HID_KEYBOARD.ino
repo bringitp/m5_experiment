@@ -48,19 +48,23 @@ void loop() {
                     }
                 }
 
+
                 int modifier = atoi(separator + 1);
 
                 if (modifier & 1) {
                     Keyboard.press(KEY_LEFT_SHIFT);
                 }
 
+                if (modifier & (1 << 1)) {
+        // 右から2番目のビットが1の場合の処理
+                    Keyboard.press(KEY_LEFT_CTRL);
+                } 
                 if (keycode != 0) {
-                    delay(30);
+                    delay(50);
                     Keyboard.pressRaw(keycode);
-                    delay(30);
                     Keyboard.releaseAll();
                 } else {
-                    delay(300);
+                    delay(50);
                     Keyboard.releaseAll();
                     bufferIndex = 0;
                 }
