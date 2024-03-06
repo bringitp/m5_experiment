@@ -3,108 +3,101 @@
 #include "USBHIDKeyboard.h"
 USBHIDKeyboard Keyboard;
 #include <SoftwareSerial.h>
-// バッファサイズの定義
-// バッファサイズの定義
+
 #define BUFFER_SIZE 64
 
-// バッファの宣言
 char serialBuffer[BUFFER_SIZE];
 int bufferIndex = 0;
-SoftwareSerial mySerial(G2, G1); // G1をRXピン、G2をTXピンとしてソフトウェアシリアルを初期化
+SoftwareSerial mySerial(G2, G1);
 
 const int buttonPin = 41;
 int previousButtonState = HIGH;
 int counter = 0;
 
 void setup() {
-  auto cfg = M5.config();
-  M5.begin(cfg);
-  mySerial.begin(9600);
+    auto cfg = M5.config();
+    M5.begin(cfg);
+    mySerial.begin(9600);
   
-  pinMode(buttonPin, INPUT_PULLUP);
-  Keyboard.begin();
-
-
-  USB.begin();
-
-
+    pinMode(buttonPin, INPUT_PULLUP);
+    Keyboard.begin();
+    USB.begin();
 }
-
-
 
 void loop() {
+    while (mySerial.available() > 0) {
+        char receivedChar = mySerial.read();
+    
+        if (bufferIndex < BUFFER_SIZE - 1) {
+            serialBuffer[bufferIndex++] = receivedChar;
+        }
+    
+        if (receivedChar == '\n' || bufferIndex >= BUFFER_SIZE - 1) {
+            serialBuffer[bufferIndex] = '\0';
+        
+            char *separator = strstr(serialBuffer, "-");
 
-  while (mySerial.available() > 0) {
-    char receivedChar = mySerial.read();
-    // バッファにデータを追加
-    if (bufferIndex < BUFFER_SIZE - 1) { // バッファオーバーフローを防ぐためのチェック
-      serialBuffer[bufferIndex++] = receivedChar;
-    }
-    // 終端文字が来た場合、データを処理
-    if (receivedChar == '\n' || bufferIndex >= BUFFER_SIZE - 1) {
+            if (separator != NULL) {
+                int keycode = 0;
+                for (char *ptr = serialBuffer; ptr != separator; ++ptr) {
+                    if (*ptr >= '0' && *ptr <= '9') {
+                        keycode = keycode * 10 + (*ptr - '0');
+                    } else {
+                        Serial.println("Error: Non-numeric character found in keycode");
+                        return;
+                    }
+                }
 
-      // 終端文字を追加
-      serialBuffer[bufferIndex] = '\0';
-      // キーコードとmodifierを取得
-      char *separator = strstr(serialBuffer, "-");
-// セパレータが見つかった場合
-// セパレータが見つかった場合
-if (separator != NULL) {
-    // セパレータの直前までの文字列をキーコードとして取得します
-    int keycode = 0;
-    for (char *ptr = serialBuffer; ptr != separator; ++ptr) {
-        if (*ptr >= '0' && *ptr <= '9') {
-            keycode = keycode * 10 + (*ptr - '0');
-        } else {
-            // 数字以外の文字が見つかった場合はエラー処理を行います
-            // ここでは単に処理を中断し、エラーメッセージを出力します
-            Serial.println("Error: Non-numeric character found in keycode");
-            return; // キーコードの処理を中断します
+                int modifier = atoi(separator + 1);
+
+                if (modifier & 1) {
+                    Keyboard.press(KEY_LEFT_SHIFT);
+                }
+
+                if (keycode != 0) {
+                    delay(30);
+                    Keyboard.pressRaw(keycode);
+                    delay(30);
+                    Keyboard.releaseAll();
+                } else {
+                    delay(300);
+                    Keyboard.releaseAll();
+                    bufferIndex = 0;
+                }
+
+                if (modifier & 1) {
+                    Keyboard.release(KEY_LEFT_SHIFT);
+                }
+            }
+
+            bufferIndex = 0;
         }
     }
-    // modifier部分を取得します
-    int modifier = atoi(separator + 1); // separatorの次の位置からmodifierを数値に変換します
 
-    // キーボードにエミュレートされたキーを押します
- // セパレータが見つかった場合
-if (separator != NULL) {
-    // セパレータの直前までの文字列をキーコードとして取得します
-    int keycode = 0;
-    for (char *ptr = serialBuffer; ptr != separator; ++ptr) {
-        if (*ptr >= '0' && *ptr <= '9') {
-            keycode = keycode * 10 + (*ptr - '0');
-        } else {
-            // 数字以外の文字が見つかった場合はエラー処理を行います
-            // ここでは単に処理を中断し、エラーメッセージを出力します
-            Serial.println("Error: Non-numeric character found in keycode");
-            return; // キーコードの処理を中断します
+    int buttonState = digitalRead(buttonPin);
+    if ((buttonState != previousButtonState) && (buttonState == LOW)) {
+        counter++;
+        for (int i = 0; i < 3; i++) {
+            Keyboard.press(16);
+            delay(330);
+            Keyboard.press(20);
+            delay(330);
+            Keyboard.release(16);
+            Keyboard.press(16);
+            delay(330);
+            Keyboard.press(20);
+            delay(330);
+            Keyboard.release(16);
+            Keyboard.press(16);
+            delay(330);
+            Keyboard.press(20);
+            delay(330);
+            Keyboard.release(16);
         }
+        Keyboard.print("You pressed the button ");
+        Keyboard.print(counter);
+        Keyboard.println(" times.");
     }
-
-    // modifier部分を取得します
-    int modifier = atoi(separator + 1); // separatorの次の位置からmodifierを数値に変換します
-
-    // キーボードにエミュレートされQたキーを押します
-    Keyboard.pressRaw(keycode);
-    Keyboard.releaseAll(); // すべてのキーの押下を解除します
-    // デバッグ用にシリアルモニタに出力します
-}
-    delay(30);
-    Keyboard.releaseAll(); // すべてのキーの押下を解除します
-    // デバッグ用にシリアルモニタに出力します
-}
-      // バッファをクリア
-      bufferIndex = 0;
-    }
-  }
-
-  int buttonState = digitalRead(buttonPin);
-  if ((buttonState != previousButtonState) && (buttonState == LOW)) {
-    counter++;
-    Keyboard.print("You pressed the button ");
-    Keyboard.print(counter);
-    Keyboard.println(" times.");
-  }
-  previousButtonState = buttonState;
-  delay(1);
+    previousButtonState = buttonState;
+    delay(1);
 }

@@ -1,7 +1,7 @@
 #include <M5Unified.h>
 #include "EspUsbHost.h"
 #include <SoftwareSerial.h>
-
+int count = 0;
 SoftwareSerial mySerial(G1, G2); // G1をRXピン、G2をTXピンとしてソフトウェアシリアルを初期化
 
 class MyEspUsbHost : public EspUsbHost {
@@ -11,14 +11,17 @@ class MyEspUsbHost : public EspUsbHost {
     M5.Display.setCursor(0, 0); // カーソルを先頭に移動
     M5.Display.printf("          "); // 以前の内容と同じ幅のスペース
     M5.Display.setCursor(0, 0); // カーソルを先頭に移動
+  ++count;
+  
     M5.Display.print(keycode); // 以前の内容と同じ幅のスペース
     M5.Display.print("-");
-    M5.Display.println(modifier); // 以前の内容と同じ幅のスペース
-
-    mySerial.print(keycode);
-    mySerial.print("-");
-    mySerial.println(modifier);
-    
+    M5.Display.print(modifier); // 以前の内容と同じ幅のスペース
+    M5.Display.print("-");
+    M5.Display.println(count); // 以前の内容と同じ幅のスペース
+  
+      mySerial.print(keycode);
+      mySerial.print("-");
+      mySerial.println(modifier);    
   }
 };
 MyEspUsbHost usbHost;
@@ -28,7 +31,7 @@ void setup(void) {
   M5.begin(cfg);
     mySerial.begin(9600);
 
-  M5.Display.setTextSize(4);
+  M5.Display.setTextSize(3);
 
   M5.Display.startWrite();
   M5.Display.print("ON!:");
@@ -41,9 +44,5 @@ void setup(void) {
 void loop(void) {
 
   M5.update();
-  M5.Display.startWrite();
-  delay(10);
   usbHost.task();
-  M5.Display.endWrite();
-  M5.Display.display();
 }
