@@ -17,7 +17,7 @@ int counter = 0;
 void setup() {
     auto cfg = M5.config();
     M5.begin(cfg);
-    mySerial.begin(9600);
+    mySerial.begin(38400);
   
     pinMode(buttonPin, INPUT_PULLUP);
     Keyboard.begin();
@@ -103,5 +103,5 @@ void loop() {
         Keyboard.println(" times.");
     }
     previousButtonState = buttonState;
-    delay(1);
+ delay(1); // チャタリング対策のため、20ミリ秒のディレイを挿入
 }

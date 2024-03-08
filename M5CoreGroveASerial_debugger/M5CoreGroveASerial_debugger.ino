@@ -1,29 +1,58 @@
 #include <M5Stack.h>
 #define CONSOLE Serial
 
-#include <SoftwareSerial.h> /* EspSoftwareSerial */
-/*                 rxPin, txPin | https://github.com/plerup/espsoftwareserial/blob/master/src/SoftwareSerial.h#L93 */
+#include <SoftwareSerial.h>
 SoftwareSerial GroveA(21, 22);
+
+const int BUFFER_SIZE = 128;
+char buffer[BUFFER_SIZE];
+int bufferIndex = 0;
+int Line = 0;
+bool btnAPressed = false;
 
 void setup() {
   M5.begin();
-  M5.Lcd.setTextSize(2);
+  M5.Lcd.setTextSize(1);
   M5.Lcd.setTextColor(M5.Lcd.color565(255, 255, 255));
-  CONSOLE.begin(9600); /* ref: https://qiita.com/inouetai/items/a4f8b134be7cc40bc42e */
-  GroveA.begin(9600); /* ref: https://github.com/plerup/espsoftwareserial/blob/master/src/SoftwareSerial.h#L118 */
+  CONSOLE.begin(9600);
+  GroveA.begin(9600);
   delay(5000);
   CONSOLE.println("-- HELLO (baud rate = 9600)");
 }
 
-void loop() {
-  M5.Lcd.fillScreen(M5.Lcd.color565(0, 0, 0));
-  M5.Lcd.setCursor(0, 0);
+void processSerialData() {
   while (GroveA.available()) {
-    String recv_str = GroveA.readStringUntil('\n');
-    CONSOLE.print("Recv: ");
-    CONSOLE.println(recv_str);
-    M5.Lcd.print("Recv: ");
-    M5.Lcd.println(recv_str);
+ 
+    char c = GroveA.read();
+    if (c == '\n') {
+      buffer[bufferIndex] = '\0'; // Null-terminate the string
+      CONSOLE.print("Recv: ");
+      CONSOLE.println(buffer);
+         ++Line;
+      M5.Lcd.print("Re ");
+      M5.Lcd.print(Line);
+      M5.Lcd.print(":");
+      M5.Lcd.println(buffer);
+      bufferIndex = 0; // Reset buffer index for next data
+    } else {
+      if (bufferIndex < BUFFER_SIZE - 1) {
+        buffer[bufferIndex++] = c; // Store character in buffer
+      }
+    }
+  }
+}
+
+void loop() {
+
+ M5.update();
+  processSerialData();
+
+
+  
+  if (M5.BtnA.wasPressed()) {
+    M5.Lcd.fillScreen(M5.Lcd.color565(0, 0, 0)); // Clear the display
+   M5.Lcd.setCursor(0, 0); 
+   Line=0;
   }
 
   unsigned long uptime_ms = millis();
