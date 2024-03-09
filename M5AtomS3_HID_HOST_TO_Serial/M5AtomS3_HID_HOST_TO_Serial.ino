@@ -6,35 +6,18 @@ SoftwareSerial mySerial(G1, G2); // G1をRXピン、G2をTXピンとしてソフ
 
 int preKey = 0; // 前回のキーコードを保存する変数
 int nowKey = 0;
-char modifiers = 0;
+int modifiers = 0;
 unsigned long preTime = 0; // 前回のキーコードが変化した時間を保存する変数
-const int EVENT_THRESHOLD = 400; // イベントをトリガーするための閾値
-
-hid_keyboard_report_t report;
-hid_keyboard_report_t last_report;
+const int EVENT_THRESHOLD = 320; // イベントをトリガーするための閾値
 
 class MyEspUsbHost : public EspUsbHost {
-  void onKeyboard(hid_keyboard_report_t in_report, hid_keyboard_report_t in_last_report) {
+  void onKeyboard(hid_keyboard_report_t report, hid_keyboard_report_t last_report) {
     M5.Display.startWrite();
     // 以前の内容を上書きするために、同じ幅のスペースで埋める
     M5.Display.setCursor(0, 0); // カーソルを先頭に移動
     M5.Display.printf("                     "); // 以前の内容と同じ幅のスペース
     M5.Display.setCursor(0, 0); // カーソルを先頭に移動 ss
-  ++count;
-
-
-
-
-   memcpy(&report, &in_report, sizeof(report));
-   memcpy(&last_report, &in_last_report, sizeof(last_report));
-          modifiers |= (in_report.modifier & KEYBOARD_MODIFIER_LEFTSHIFT) ? (1 << 0) : 0;
-          modifiers |= (in_report.modifier & KEYBOARD_MODIFIER_LEFTCTRL) ? (1 << 1) : 0;
-          modifiers |= (in_report.modifier & KEYBOARD_MODIFIER_LEFTALT) ? (1 << 2) : 0;
-          modifiers |= (in_report.modifier & KEYBOARD_MODIFIER_LEFTGUI ) ? (1 << 3) : 0;
-          modifiers |= (in_report.modifier & KEYBOARD_MODIFIER_RIGHTSHIFT)? (1 << 4) : 0;
-          modifiers |= (in_report.modifier & KEYBOARD_MODIFIER_RIGHTCTRL) ? (1 << 5) : 0;
-          modifiers |= (in_report.modifier & KEYBOARD_MODIFIER_RIGHTALT) ? (1 << 6) : 0;
-          modifiers |= (in_report.modifier & KEYBOARD_MODIFIER_RIGHTGUI ) ? (1 << 7) : 0;
+    ++count;
 
 // onKeyboardKey メソッド内でフラグをリセットする
 //if (isKeyPressed) {
@@ -64,23 +47,23 @@ class MyEspUsbHost : public EspUsbHost {
 
     }
 
+    unsigned long currentTime = millis();
+
+    M5.Display.endWrite();
+    nowKey = get_char;
+    preKey = last_report.keycode[0]; // 現在のキーコードを保存
+    preTime = currentTime; // 現在の時間を保存
+    modifiers = report.modifier ;
+
     M5.Display.print(get_char); // 以前の内容と同じ幅のスペース
     M5.Display.print("-");
     M5.Display.print(modifiers); // 以前の内容と同じ幅のスペース
     M5.Display.print("-");
     M5.Display.println(count); // 以前の内容と同じ幅のスペースs
 
-    unsigned long currentTime = millis();
-
-    M5.Display.endWrite();
-    nowKey = get_char;
-    preKey = in_last_report.keycode[0]; // 現在のキーコードを保存
-    preTime = currentTime; // 現在の時間を保存
-
-
-     mySerial.print(nowKey);
-     mySerial.print("-");
-     mySerial.println(modifiers);    
+    mySerial.print(nowKey);
+    mySerial.print("-");
+    mySerial.println(modifiers);    
      
   }
 };
@@ -109,20 +92,14 @@ void loop(void) {
   usbHost.task(); 
   
   unsigned long currentTime = millis();
-  if (nowKey != 0 && currentTime - preTime >= EVENT_THRESHOLD) {
-
-  
+  if (nowKey != 0 && currentTime - preTime >= EVENT_THRESHOLD) {  
    if (nowKey != 0 ) {
      mySerial.print(nowKey);
      mySerial.print("-");
      mySerial.println(modifiers);    
    }
-
-  
-   // 70ミリ秒程度で連打していく
-    delay(70);
+   // 32ミリ秒程度で連打していく
+    delay(32);
   }
-  
-
   delay(1); // チャタリング対策のため、20ミリ秒のディレイを挿入
 }
