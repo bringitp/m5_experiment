@@ -8,7 +8,8 @@ int preKey = 0; // 前回のキーコードを保存する変数
 int nowKey = 0;
 int modifiers = 0;
 unsigned long preTime = 0; // 前回のキーコードが変化した時間を保存する変数
-const int EVENT_THRESHOLD = 320; // イベントをトリガーするための閾値
+const int EVENT_REPEAT_THRESHOLD = 320; // イベントをトリガーするための閾値
+const int EVENT_2nd_REPEAT_THRESHOLD = 2000;
 
 class MyEspUsbHost : public EspUsbHost {
   void onKeyboard(hid_keyboard_report_t report, hid_keyboard_report_t last_report) {
@@ -52,7 +53,10 @@ class MyEspUsbHost : public EspUsbHost {
     M5.Display.endWrite();
     nowKey = get_char;
     preKey = last_report.keycode[0]; // 現在のキーコードを保存
-    preTime = currentTime; // 現在の時間を保存
+     // 特殊キーは連打しないためカウントしない
+    if ( nowKey != 0 ) {
+      preTime = currentTime; // 現在の時間を保存
+    }
     modifiers = report.modifier ;
 
     M5.Display.print(get_char); // 以前の内容と同じ幅のスペース
@@ -92,14 +96,20 @@ void loop(void) {
   usbHost.task(); 
   
   unsigned long currentTime = millis();
-  if (nowKey != 0 && currentTime - preTime >= EVENT_THRESHOLD) {  
+  if (nowKey != 0 && currentTime - preTime >= EVENT_REPEAT_THRESHOLD) {  
    if (nowKey != 0 ) {
      mySerial.print(nowKey);
      mySerial.print("-");
      mySerial.println(modifiers);    
    }
    // 32ミリ秒程度で連打していく
+
+   if (currentTime - preTime >= EVENT_REPEAT_THRESHOLD && currentTime - preTime < EVENT_2nd_REPEAT_THRESHOLD) { 
     delay(32);
+   }
+   if (currentTime - preTime > EVENT_2nd_REPEAT_THRESHOLD) { 
+    delay(8);
+   }
   }
   delay(1); // チャタリング対策のため、20ミリ秒のディレイを挿入
 }

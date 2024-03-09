@@ -50,6 +50,15 @@ void loop() {
 
         int modifier = atoi(separator + 1);
 
+//30 - 3  Ctrl Shift 1
+if (keycode == 30 && modifier == 3 ) {
+  Keyboard.press(35); //日本語変換キー
+  bufferIndex = 0;
+  delay(4);
+  Keyboard.release(35);
+  return ;
+}
+
         if (modifier & 1) {
           Keyboard.press(KEY_LEFT_CTRL);
         }
@@ -58,13 +67,11 @@ void loop() {
           Keyboard.press(KEY_LEFT_SHIFT);
         }
 
-if (modifier & (1 << 4)) {
-    // 右から5番目のビットが1の場合の処理
-    // ここに適切な処理を記述する
+        if (modifier & (1 << 5)) {
+        // 右から5番目のビットが1の場合の処理
+        // ここに適切な処理を記述する
               Keyboard.press(KEY_RIGHT_SHIFT);
-}
-
-
+        }
         if (keycode != 0) {
           delay(4);
           Keyboard.pressRaw(keycode);
@@ -80,41 +87,21 @@ if (modifier & (1 << 4)) {
           Keyboard.release(KEY_LEFT_SHIFT);
         }
 
-if (modifier & (1 << 4)) {
-    // 右から5番目のビットが1の場合の処理
-    // ここに適切な処理を記述する
-              Keyboard.release(KEY_RIGHT_SHIFT);
-}
-
-
+      if (modifier & (1 << 5)) {
+      // 右から5番目のビットが1の場合の処理
+      // ここに適切な処理を記述する
+        Keyboard.release(KEY_RIGHT_SHIFT);
+       }
 
       }
-
       bufferIndex = 0;
     }
   }
-
   int buttonState = digitalRead(buttonPin);
   if ((buttonState != previousButtonState) && (buttonState == LOW)) {
     counter++;
-    for (int i = 0; i < 3; i++) {
-      Keyboard.press(16);
+      Keyboard.press(49);
       delay(330);
-      Keyboard.press(20);
-      delay(330);
-      Keyboard.release(16);
-      Keyboard.press(16);
-      delay(330);
-      Keyboard.press(20);
-      delay(330);
-      Keyboard.release(16);
-      Keyboard.press(16);
-      delay(330);
-      Keyboard.press(20);
-      delay(330);
-      Keyboard.release(16);
-    }
-    Keyboard.print("You pressed the button ");
     Keyboard.print(counter);
     Keyboard.println(" times.");
   }
