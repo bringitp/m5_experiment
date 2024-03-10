@@ -88,7 +88,8 @@ if (keycode == 30 && modifier == 3 ) {
         }
 
       if (modifier & (1 << 5)) {
-      // 右から5番目のビットが1の場合の処理
+      // 右から5番目のビットが1の場合の処理3 times.
+      
       // ここに適切な処理を記述する
         Keyboard.release(KEY_RIGHT_SHIFT);
        }
@@ -100,8 +101,10 @@ if (keycode == 30 && modifier == 3 ) {
   int buttonState = digitalRead(buttonPin);
   if ((buttonState != previousButtonState) && (buttonState == LOW)) {
     counter++;
-      Keyboard.press(49);
+    Keyboard.press(KEY_LEFT_ALT);
+    Keyboard.press('`');
       delay(330);
+           Keyboard.releaseAll();
     Keyboard.print(counter);
     Keyboard.println(" times.");
   }
